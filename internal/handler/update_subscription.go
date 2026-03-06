@@ -1,0 +1,76 @@
+package handler
+
+import (
+	"encoding/json"
+	"errors"
+	"net/http"
+	"strconv"
+
+	"github.com/google/uuid"
+	"github.com/pavelgolang/subscriptions-service-api/internal/domain"
+	"github.com/pavelgolang/subscriptions-service-api/internal/dto"
+)
+
+type UpdateSubscriptionRequest struct {
+	Name      *string      `json:"name,omitempty"`
+	Price     *int         `json:"price,omitempty"`
+	UserID    *uuid.UUID   `json:"user_id,omitempty"`
+	StartDate *domain.Date `json:"start_date,omitempty" example:"01-2006" swaggertype:"string"`
+	EndDate   *domain.Date `json:"end_date,omitempty" example:"01-2006" swaggertype:"string"`
+}
+
+// @Summary Update subscription
+// @Description Updates an existing subscription
+// @Tags subscriptions
+// @Accept json
+// @Param id path string true "Subscription ID"
+// @Param request body UpdateSubscriptionRequest true "Subscription payload"
+// @Success 200 {object} domain.Subscription
+// @Failure 400 {object} domain.ErrorResponse
+// @Failure 404 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /subscriptions/{id} [put]
+func (h *Handler) UpdateSubscription(w http.ResponseWriter, r *http.Request) {
+	var req UpdateSubscriptionRequest
+	id64, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
+	if err != nil {
+		WriteErrorJSON(w, err, 400)
+		return
+	}
+
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		WriteErrorJSON(w, err, 400)
+		return
+	}
+
+	ctx := r.Context()
+	log := h.logger.With("request_id", ctx.Value(domain.RequestIDKey))
+	log.Debug("request body", "input", req)
+
+	resp, err := h.subscriptions.UpdateSubscription(ctx, dto.UpdateSubscriptionDTO{
+		ID:        uint(id64),
+		Name:      req.Name,
+		Price:     req.Price,
+		UserID:    req.UserID,
+		StartDate: req.StartDate,
+		EndDate:   req.EndDate,
+	})
+	if err != nil {
+		var br domain.BadRequest
+		if errors.As(err, &br) {
+			WriteErrorJSON(w, err, 400)
+			return
+		}
+		if errors.Is(err, domain.ErrSubscriptionNotFound) {
+			WriteErrorJSON(w, err, 404)
+			return
+		}
+		log.Error("failed to update subscription", "err", err)
+		WriteErrorJSON(w, errors.New("internal server error"), 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}

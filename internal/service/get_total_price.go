@@ -1,0 +1,30 @@
+package service
+
+import (
+	"context"
+	"strings"
+
+	"github.com/pavelgolang/subscriptions-service-api/internal/domain"
+	"github.com/pavelgolang/subscriptions-service-api/internal/dto"
+)
+
+func (s *subscriptionsService) GetTotalPrice(ctx context.Context, req dto.GetTotalPriceDTO) (int, error) {
+	if req.From.Time.IsZero() {
+		return 0, domain.BadRequest{domain.ErrInvalidFromDate}
+	}
+	if req.To.Time.IsZero() {
+		return 0, domain.BadRequest{domain.ErrInvalidToDate}
+	}
+	if req.Name != nil {
+		if *req.Name = strings.TrimSpace(*req.Name); *req.Name == "" {
+			return 0, domain.BadRequest{domain.ErrInvalidName}
+		}
+	}
+
+	total, err := s.repo.GetTotalPrice(ctx, req)
+	if err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}

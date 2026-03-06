@@ -1,0 +1,261 @@
+basePath: /
+definitions:
+  domain.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  domain.Subscription:
+    properties:
+      end_date:
+        example: 01-2006
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      price:
+        type: integer
+      start_date:
+        example: 01-2006
+        type: string
+      user_id:
+        type: string
+    type: object
+  handler.CreateSubscriptionRequest:
+    properties:
+      end_date:
+        example: 01-2006
+        type: string
+      name:
+        type: string
+      price:
+        type: integer
+      start_date:
+        example: 01-2006
+        type: string
+      user_id:
+        type: string
+    type: object
+  handler.GetTotalPriceResponse:
+    properties:
+      price:
+        type: integer
+    type: object
+  handler.UpdateSubscriptionRequest:
+    properties:
+      end_date:
+        example: 01-2006
+        type: string
+      name:
+        type: string
+      price:
+        type: integer
+      start_date:
+        example: 01-2006
+        type: string
+      user_id:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Simple subscriptions service
+  title: Subscriptions API
+  version: "1.0"
+paths:
+  /subscriptions:
+    get:
+      consumes:
+      - application/json
+      description: Returns a list of all subscriptions
+      parameters:
+      - default: "1"
+        description: Page number
+        in: query
+        name: page
+        type: string
+      - default: "20"
+        description: Number of subscriptions per page
+        in: query
+        name: page_size
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Subscription'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Get all subscriptions
+      tags:
+      - subscriptions
+    post:
+      consumes:
+      - application/json
+      description: Creates a new subscription
+      parameters:
+      - description: Subscription payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateSubscriptionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Subscription'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Create subscription
+      tags:
+      - subscriptions
+  /subscriptions/{id}:
+    delete:
+      description: Deletes a subscription
+      parameters:
+      - description: Subscription ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Delete subscription
+      tags:
+      - subscriptions
+    get:
+      description: Fetches a subscription with specified ID
+      parameters:
+      - description: Subscription ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Subscription'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Get subscription by ID
+      tags:
+      - subscriptions
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing subscription
+      parameters:
+      - description: Subscription ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Subscription payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateSubscriptionRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Subscription'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Update subscription
+      tags:
+      - subscriptions
+  /subscriptions/price:
+    get:
+      description: Counts total price of subscriptions for specified period
+      parameters:
+      - description: Start of period
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: End of period
+        in: query
+        name: to
+        required: true
+        type: string
+      - description: User ID to filter subscriptions by
+        in: query
+        name: user_id
+        type: string
+      - description: Name of subscription to filter by
+        in: query
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.GetTotalPriceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Get total subscriptions price
+      tags:
+      - subscriptions
+swagger: "2.0"

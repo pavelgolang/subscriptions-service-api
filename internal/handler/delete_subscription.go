@@ -1,0 +1,45 @@
+package handler
+
+import (
+	"errors"
+	"net/http"
+	"strconv"
+
+	"github.com/pavelgolang/subscriptions-service-api/internal/domain"
+)
+
+// @Summary Delete subscription
+// @Description Deletes a subscription
+// @Tags subscriptions
+// @Param id path string true "Subscription ID"
+// @Success 204 "No Content"
+// @Failure 400 {object} domain.ErrorResponse
+// @Failure 404 {object} domain.ErrorResponse
+// @Failure 500 {object} domain.ErrorResponse
+// @Router /subscriptions/{id} [delete]
+func (h *Handler) DeleteSubscription(w http.ResponseWriter, r *http.Request) {
+	id64, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
+	if err != nil {
+		WriteErrorJSON(w, domain.ErrInvalidID, 400)
+		return
+	}
+	ctx := r.Context()
+	log := h.logger.With("request_id", ctx.Value(domain.RequestIDKey))
+
+	err = h.subscriptions.DeleteSubscription(ctx, uint(id64))
+	if err != nil {
+		if errors.Is(err, domain.ErrSubscriptionNotFound) {
+			WriteErrorJSON(w, err, 404)
+			return
+		}
+		if errors.Is(err, domain.ErrInvalidID) {
+			WriteErrorJSON(w, err, 400)
+			return
+		}
+		log.Error("failed to delete subscription", "err", err)
+		WriteErrorJSON(w, errors.New("internal server error"), 500)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
