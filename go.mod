@@ -1,4 +1,4 @@
-module github.com/prajkin/subscriptions-service-api
+module github.com/pavelgolang/subscriptions-service-api
 
 go 1.25.3
 
